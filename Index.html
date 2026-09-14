@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Founder Ops Console — Live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14181f;
+    --panel: #1b212b;
+    --panel-alt: #20262f;
+    --border: #2a313c;
+    --border-soft: #232a33;
+    --text: #e7eaee;
+    --text-dim: #8b93a1;
+    --text-faint: #5c6472;
+    --teal: #3fbfad;
+    --teal-dim: rgba(63, 191, 173, 0.14);
+    --teal-glow: rgba(63, 191, 173, 0.25);
+    --amber: #e8a33d;
+    --amber-dim: rgba(232, 163, 61, 0.14);
+  }
+
+  html[data-theme="light"] {
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --panel-alt: #eef0f3;
+    --border: #dbe0e6;
+    --border-soft: #e7eaef;
+    --text: #1a1d23;
+    --text-dim: #5b6270;
+    --text-faint: #868f9e;
+    --teal: #14897b;
+    --teal-dim: rgba(20, 137, 123, 0.10);
+    --teal-glow: rgba(20, 137, 123, 0.20);
+    --amber: #9c630c;
+    --amber-dim: rgba(156, 99, 12, 0.11);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body,
+  .panel, .pill, .pill-pop, .goal-card, .ticket, .item, .chip, .tag, .theme-btn {
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  .app {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 24px 40px;
+  }
+
+  header.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding-bottom: 18px;
+    margin-bottom: 22px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+
+  .brand h1 { font-size: 19px; font-weight: 600; margin: 0 0 3px; letter-spacing: -0.01em; }
+  .brand p { margin: 0; font-size: 12.5px; color: var(--text-faint); }
+  .live-badge { color: var(--teal); font-weight: 500; }
+
+  .right-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .integrations { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill-wrap { position: relative; }
+
+  .pill {
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    padding: 5px 9px 5px 8px; border-radius: 3px;
+    border: 1px solid var(--border); background: var(--panel-alt);
+    color: var(--text-dim); cursor: pointer; user-select: none;
+  }
+  .pill:hover { color: var(--text); }
+  .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
+  .pill.syncing { border-color: var(--amber); color: var(--amber); }
+  .pill.syncing .dot { background: var(--amber); animation: pulse 0.9s ease-in-out infinite; }
+
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+  .pill-pop {
+    position: absolute; top: calc(100% + 6px); right: 0; z-index: 30;
+    display: none; flex-direction: column; gap: 5px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 5px;
+    padding: 9px 11px; min-width: 172px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  }
+  .pill-pop.open { display: flex; }
+  .pop-row { display: flex; justify-content: space-between; gap: 14px; font-size: 11px; }
+  .pop-row span:first-child { color: var(--text-faint); }
+  .pop-row span:last-child { color: var(--text-dim); font-family: 'IBM Plex Mono', monospace; }
+  .grain-record-link {
+    display: block; margin-top: 4px; padding-top: 7px;
+    border-top: 1px dashed var(--border-soft);
+    font-size: 10.5px; color: var(--teal); text-decoration: none;
+  }
+  .grain-record-link:hover { opacity: 0.8; }
+
+  .theme-btn {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-dim);
+    background: var(--panel-alt); border: 1px solid var(--border); border-radius: 4px;
+    padding: 6px 10px; cursor: pointer;
+  }
+  .theme-btn:hover { color: var(--text); }
+
+  .grid { display: grid; grid-template-columns: 1.05fr 1.5fr 1.15fr; gap: 18px; align-items: start; }
+  @media (max-width: 880px) { .grid { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--panel); border: 1px solid var(--border-soft); border-radius: 6px; overflow: visible; }
+  .panel-head {
+    padding: 14px 16px 12px; border-bottom: 1px solid var(--border-soft);
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .panel-head h2 { font-size: 13.5px; font-weight: 600; margin: 0; }
+  .panel-head .src { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--text-faint); }
+  .panel-body { padding: 14px 16px 16px; }
+
+  .goal-card {
+    border: 1px solid var(--border-soft); background: var(--panel-alt); border-radius: 5px;
+    padding: 11px 12px; margin-bottom: 10px;
+  }
+  .goal-card:last-child { margin-bottom: 0; }
+  .goal-card .tag {
+    display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+    color: var(--text-faint); border: 1px solid var(--border); border-radius: 3px;
+    padding: 1px 6px; margin-bottom: 7px;
+  }
+  .goal-card p { margin: 0 0 8px; font-size: 13px; line-height: 1.42; }
+  .goal-card .meta { font-size: 11px; color: var(--text-faint); display: flex; justify-content: space-between; }
+
+  .detail-toggle {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--teal);
+    cursor: pointer; margin-top: 9px; user-select: none;
+  }
+  .detail-toggle:hover { opacity: 0.8; }
+
+  .goal-detail, .ticket-detail, .item-detail {
+    max-height: 0; overflow: hidden; opacity: 0;
+    transition: max-height 0.28s ease, opacity 0.2s ease, margin 0.28s ease, padding 0.28s ease;
+  }
+  .goal-detail.open { max-height: 180px; opacity: 1; margin-top: 9px; padding-top: 9px; border-top: 1px dashed var(--border); }
+  .ticket-detail.open { max-height: 130px; opacity: 1; margin-top: 9px; padding-top: 9px; border-top: 1px dashed var(--border-soft); }
+  .item-detail.open { max-height: 140px; opacity: 1; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-soft); }
+
+  .detail-row { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--text-dim); padding: 3px 0; gap: 12px; }
+  .detail-row span:first-child { color: var(--text-faint); flex-shrink: 0; }
+  .detail-row span:last-child { text-align: right; }
+
+  .sync-btn {
+    margin-top: 10px; width: 100%; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px;
+    letter-spacing: 0.02em; background: var(--teal-dim); color: var(--teal);
+    border: 1px solid rgba(63, 191, 173, 0.4); border-radius: 4px; padding: 8px 0; cursor: pointer;
+  }
+  .sync-btn:hover { background: rgba(63, 191, 173, 0.24); }
+  .sync-btn:disabled { opacity: 0.55; cursor: default; }
+
+  .sync-note { margin-top: 10px; font-size: 10.5px; color: var(--text-faint); text-align: center; }
+
+  .flow-note { font-size: 12px; color: var(--text-dim); margin: 0 0 14px; line-height: 1.5; }
+  .ticket-list { min-height: 40px; }
+
+  .ticket {
+    padding: 10px 0; border-bottom: 1px solid var(--border-soft);
+    display: flex; align-items: flex-start; gap: 10px;
+    opacity: 0; transform: translateY(6px); animation: reveal 0.4s ease forwards; cursor: pointer;
+  }
+  .ticket:last-child { border-bottom: none; }
+  .ticket:hover .title { color: var(--teal); }
+  @keyframes reveal { to { opacity: 1; transform: translateY(0); } }
+
+  .ticket .id { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-faint); padding-top: 2px; flex-shrink: 0; width: 46px; }
+  .ticket .body { flex: 1; min-width: 0; }
+  .ticket .title { font-size: 13px; margin: 0 0 5px; }
+  .ticket .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+  .chip { font-family: 'IBM Plex Mono', monospace; font-size: 10px; padding: 2px 6px; border-radius: 3px; }
+  .chip.owner { background: var(--panel-alt); color: var(--text-dim); border: 1px solid var(--border); }
+  .chip.prio-high { background: var(--amber-dim); color: var(--amber); }
+  .chip.prio-med { background: var(--panel-alt); color: var(--text-dim); border: 1px solid var(--border); }
+  .chip.synced-tag { background: var(--teal-dim); color: var(--teal); }
+  .chip.status { background: var(--panel-alt); color: var(--text-dim); border: 1px solid var(--border); cursor: pointer; }
+  .chip.status:hover { border-color: var(--text-faint); }
+  .chip.status.s1 { background: var(--amber-dim); color: var(--amber); border-color: transparent; }
+  .chip.status.s2 { background: var(--teal-dim); color: var(--teal); border-color: transparent; }
+
+  .ticket-detail .desc { font-size: 12px; color: var(--text-dim); margin: 0 0 8px; line-height: 1.45; }
+
+  .empty-state { padding: 30px 6px 10px; text-align: center; color: var(--text-faint); font-size: 12.5px; }
+  .empty-state.error { color: var(--amber); }
+
+  .tabs {
+    display: flex; gap: 4px; background: var(--panel-alt); border: 1px solid var(--border-soft);
+    border-radius: 5px; padding: 3px; margin-bottom: 12px;
+  }
+  .tab { flex: 1; text-align: center; font-size: 12px; padding: 6px 0; border-radius: 4px; cursor: pointer; color: var(--text-dim); }
+  .tab.on { background: var(--panel); color: var(--text); }
+
+  .item { border-bottom: 1px solid var(--border-soft); padding: 10px 0; cursor: pointer; }
+  .item:last-child { border-bottom: none; }
+  .item:hover p { color: var(--text); }
+  .item p { margin: 0 0 6px; font-size: 12.8px; line-height: 1.4; }
+  .item .meta { display: flex; justify-content: space-between; align-items: center; }
+
+  .waiting { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--amber); }
+  .waiting.clear { color: var(--text-faint); }
+  .owner-tag { font-size: 11px; color: var(--text-faint); }
+  .context { font-size: 11.8px; color: var(--text-dim); margin: 0 0 9px; line-height: 1.45; }
+  .resolved-note { font-size: 11px; color: var(--teal); margin: 0; }
+
+  .nudge-btn {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var(--amber-dim); color: var(--amber);
+    border: 1px solid rgba(232, 163, 61, 0.4); border-radius: 4px; padding: 6px 10px; cursor: pointer;
+  }
+  .nudge-btn:hover { background: rgba(232, 163, 61, 0.24); }
+  .nudge-btn.live { background: var(--teal-dim); color: var(--teal); border-color: rgba(63,191,173,0.4); }
+  .nudge-btn.sent { background: var(--teal-dim); color: var(--teal); border-color: rgba(63, 191, 173, 0.4); cursor: default; }
+
+  .panel-head-right { display: flex; align-items: center; gap: 10px; }
+  .new-btn {
+    font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--teal);
+    cursor: pointer; background: none; border: none; padding: 0;
+  }
+  .new-btn:hover { opacity: 0.8; }
+
+  .quick-form {
+    display: none; margin-bottom: 14px; padding: 10px;
+    border: 1px dashed var(--border); border-radius: 5px; background: var(--panel-alt);
+  }
+  .quick-form.open { display: block; }
+  .quick-form label {
+    display: block; font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+    color: var(--text-faint); margin: 8px 0 3px;
+  }
+  .quick-form label:first-child { margin-top: 0; }
+  .quick-form input, .quick-form select, .quick-form textarea {
+    width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 4px;
+    color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: 12px; padding: 6px 8px;
+  }
+  .quick-form textarea { resize: vertical; min-height: 44px; }
+  .quick-form-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .quick-form-actions button {
+    flex: 1; font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    padding: 7px 0; border-radius: 4px; cursor: pointer;
+  }
+  .qf-submit { background: var(--teal-dim); color: var(--teal); border: 1px solid rgba(63,191,173,0.4); }
+  .qf-submit:hover { background: rgba(63,191,173,0.24); }
+  .qf-cancel { background: transparent; color: var(--text-faint); border: 1px solid var(--border); }
+
+  footer {
+    margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-soft);
+    font-size: 11.5px; color: var(--text-faint); line-height: 1.6;
+  }
+  footer strong { color: var(--text-dim); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <h1>Founder Ops Console <span class="live-badge mono">● live</span></h1>
+      <p>Meridian Health · Clinical &amp; Consumer — goals are real Notion data, sync creates real Linear tickets</p>
+    </div>
+    <div class="right-controls">
+      <div class="integrations">
+
+        <div class="pill-wrap">
+          <div class="pill" onclick="event.stopPropagation(); togglePill('notion')"><span class="dot"></span>Notion</div>
+          <div class="pill-pop" id="pop-notion">
+            <div class="pop-row"><span>Connection</span><span>Live</span></div>
+            <div class="pop-row"><span>Source</span><span>Q3 Goals</span></div>
+          </div>
+        </div>
+
+        <div class="pill-wrap">
+          <div class="pill" id="pill-linear" onclick="event.stopPropagation(); togglePill('linear')"><span class="dot"></span>Linear</div>
+          <div class="pill-pop" id="pop-linear">
+            <div class="pop-row"><span>Last synced</span><span id="linearLastSync">—</span></div>
+            <div class="pop-row"><span>Created this session</span><span id="linearIssueCount">0</span></div>
+          </div>
+        </div>
+
+        <div class="pill-wrap">
+          <div class="pill" onclick="event.stopPropagation(); togglePill('attio')"><span class="dot"></span>Attio</div>
+          <div class="pill-pop" id="pop-attio">
+            <div class="pop-row"><span>Connection</span><span>Live</span></div>
+            <div class="pop-row"><span>Tasks created</span><span id="attioTaskCount">0</span></div>
+          </div>
+        </div>
+
+        <div class="pill-wrap">
+          <div class="pill" onclick="event.stopPropagation(); togglePill('grain')"><span class="dot"></span>Grain</div>
+          <div class="pill-pop" id="pop-grain">
+            <div class="pop-row"><span>Status</span><span>Awaiting a recording</span></div>
+            <a class="grain-record-link mono" href="https://app.grain.com" target="_blank" rel="noopener">Record a test call ▸</a>
+          </div>
+        </div>
+
+        <div class="pill-wrap">
+          <div class="pill" onclick="event.stopPropagation(); togglePill('zapier')"><span class="dot"></span>Zapier</div>
+          <div class="pill-pop" id="pop-zapier">
+            <div class="pop-row"><span>Role</span><span>Linear + Attio auth</span></div>
+          </div>
+        </div>
+
+      </div>
+      <button class="theme-btn mono" id="themeToggle" onclick="toggleTheme()">Light mode</button>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- GOALS (live) -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Q3 goals</h2>
+        <div class="panel-head-right">
+          <span class="src mono">notion · live</span>
+          <button class="new-btn" onclick="toggleForm('goalForm')">+ New</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="quick-form" id="goalForm">
+          <label>Goal title</label>
+          <input type="text" id="qfGoalTitle" placeholder="e.g. Launch Q4 referral program">
+          <label>Vertical</label>
+          <select id="qfGoalVertical">
+            <option value="Clinical">Clinical</option>
+            <option value="Consumer">Consumer</option>
+          </select>
+          <label>Priority</label>
+          <select id="qfGoalPriority">
+            <option value="High">High</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="Low">Low</option>
+          </select>
+          <label>Due date</label>
+          <input type="date" id="qfGoalDue">
+          <label>Owner</label>
+          <input type="text" id="qfGoalOwner" placeholder="Founder">
+          <div class="quick-form-actions">
+            <button class="qf-cancel" onclick="toggleForm('goalForm')">Cancel</button>
+            <button class="qf-submit" onclick="createGoal()">Create in Notion</button>
+          </div>
+        </div>
+        <div id="goalsContainer" class="empty-state">Loading live goals from Notion…</div>
+      </div>
+    </section>
+
+    <!-- SYNC / LINEAR (live) -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Linear tickets</h2>
+        <div class="panel-head-right">
+          <span class="src mono">linear · live</span>
+          <button class="new-btn" onclick="toggleForm('ticketForm')">+ New</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <p class="flow-note">Click <strong style="color:var(--teal)">Sync</strong> on any not-yet-synced goal, or create a standalone ticket directly. Both call a Cloudflare Worker that writes to Linear for real.</p>
+        <div class="quick-form" id="ticketForm">
+          <label>Ticket title</label>
+          <input type="text" id="qfTicketTitle" placeholder="e.g. Fix broken portal link">
+          <label>Description</label>
+          <textarea id="qfTicketDesc" placeholder="Optional detail"></textarea>
+          <label>Priority</label>
+          <select id="qfTicketPriority">
+            <option value="2">High</option>
+            <option value="3" selected>Medium</option>
+            <option value="4">Low</option>
+          </select>
+          <div class="quick-form-actions">
+            <button class="qf-cancel" onclick="toggleForm('ticketForm')">Cancel</button>
+            <button class="qf-submit" onclick="createStandaloneTicket()">Create in Linear</button>
+          </div>
+        </div>
+        <div class="ticket-list" id="ticketList">
+          <div class="empty-state" id="emptyState">No tickets created yet this session.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOLLOW-UPS -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Founder follow-ups</h2>
+        <div class="panel-head-right">
+          <span class="src mono">tracker</span>
+          <button class="new-btn" onclick="toggleForm('attioForm')">+ New task</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="quick-form" id="attioForm">
+          <label>Task</label>
+          <textarea id="qfAttioContent" placeholder="e.g. Call the new lab partner about the BAA clause"></textarea>
+          <label>Deadline (optional)</label>
+          <input type="date" id="qfAttioDeadline">
+          <div class="quick-form-actions">
+            <button class="qf-cancel" onclick="toggleForm('attioForm')">Cancel</button>
+            <button class="qf-submit" onclick="createAttioTaskManual()">Create in Attio</button>
+          </div>
+        </div>
+        <div class="tabs">
+          <div class="tab on" id="tabClinical" onclick="showVertical('clinical')">Clinical</div>
+          <div class="tab" id="tabConsumer" onclick="showVertical('consumer')">Consumer</div>
+        </div>
+
+        <div id="verticalClinical">
+          <div class="item" onclick="toggleDetail('cl1')">
+            <p>Sign the BAA with the new lab partner before onboarding opens.</p>
+            <div class="meta">
+              <span class="owner-tag">Legal · Founder</span>
+              <span class="waiting" id="wait-cl1">Waiting 2 days</span>
+            </div>
+            <div class="item-detail" id="detail-cl1">
+              <p class="context">Referenced in Tuesday's legal sync — counsel flagged one indemnification clause still under review.</p>
+              <button class="nudge-btn" id="nudge-cl1" onclick="event.stopPropagation(); sendNudge('cl1')">Send reminder (simulated)</button>
+            </div>
+          </div>
+          <div class="item" onclick="toggleDetail('cl2')">
+            <p>Review the provider comp model draft and confirm bands.</p>
+            <div class="meta">
+              <span class="owner-tag">Ops · Founder</span>
+              <span class="waiting" id="wait-cl2">Waiting 4 days</span>
+            </div>
+            <div class="item-detail" id="detail-cl2">
+              <p class="context">Referenced in the Sep 8 Grain call — Founder asked for one more pass on senior-provider banding before sign-off.</p>
+              <button class="nudge-btn" id="nudge-cl2" onclick="event.stopPropagation(); sendNudge('cl2')">Send reminder (simulated)</button>
+            </div>
+          </div>
+          <div class="item" onclick="toggleDetail('cl3')">
+            <p>Approve the clinical onboarding copy for the patient portal.</p>
+            <div class="meta">
+              <span class="owner-tag">Product · Founder</span>
+              <span class="waiting clear">Resolved</span>
+            </div>
+            <div class="item-detail" id="detail-cl3">
+              <p class="context">Approved in Slack, Sep 11 — no changes requested.</p>
+              <p class="resolved-note">No action needed.</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="verticalConsumer" style="display:none;">
+          <div class="item" onclick="toggleDetail('co1')">
+            <p>Decide on the Q3 marketing budget before the campaign locks.</p>
+            <div class="meta">
+              <span class="owner-tag">Marketing · Founder</span>
+              <span class="waiting" id="wait-co1">Waiting 1 day</span>
+            </div>
+            <div class="item-detail" id="detail-co1">
+              <p class="context">Referenced in Monday's leadership sync — the agency needs a go/no-go before Thursday's ad buy.</p>
+              <button class="nudge-btn" id="nudge-co1" onclick="event.stopPropagation(); sendNudge('co1')">Send reminder (simulated)</button>
+            </div>
+          </div>
+          <div class="item" onclick="toggleDetail('co2')">
+            <p>Follow up with the investor intro from Tuesday's Grain call.</p>
+            <div class="meta">
+              <span class="owner-tag">Fundraising · Founder</span>
+              <span class="waiting" id="wait-co2">Waiting 3 days</span>
+            </div>
+            <div class="item-detail" id="detail-co2">
+              <p class="context">Referenced in the Sep 10, 9:14 AM Grain call — investor asked for updated cohort retention numbers before the next call.</p>
+              <button class="nudge-btn live" id="nudge-co2" onclick="event.stopPropagation(); sendNudge('co2')">Create real Attio task</button>
+            </div>
+          </div>
+          <div class="item" onclick="toggleDetail('co3')">
+            <p>Confirm the App Store listing copy with the design contractor.</p>
+            <div class="meta">
+              <span class="owner-tag">Product · Founder</span>
+              <span class="waiting clear">Resolved</span>
+            </div>
+            <div class="item-detail" id="detail-co3">
+              <p class="context">Confirmed by email, Sep 9 — contractor delivered final screenshots.</p>
+              <p class="resolved-note">No action needed.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    <strong>What's real here:</strong> this page is a static file with no credentials in it — every action shown below runs through a Cloudflare Worker that holds the real API keys server-side. The Goals panel reads live from Notion. Sync, "+ New" on any panel, and "Create real Attio task" all create genuine records in Notion, Linear, or Attio, verifiable in those apps afterward.
+    <strong>What's still presentation-only:</strong> ticket status chips (Todo/In progress/Done) are a local visual toggle, not written back to Linear. The five non-investor follow-up items and their "Send reminder" buttons are sample tracker content, not wired to a real notification channel. Grain isn't wired into this page — connected via Zapier separately, waiting on a real recording to read from.
+  </footer>
+
+</div>
+
+<script>
+  const WORKER_URL = 'https://founder-ops-worker.lab-d86.workers.dev';
+
+  const ticketTemplates = {
+    "Launch provider onboarding flow ahead of the October cohort": [
+      { title: 'Design provider onboarding wireframes', description: 'Cover identity verification, document upload, and the confirmation screen for the October cohort.', priority: 2, owner: 'Design' },
+      { title: 'Build Attio pipeline stage for new provider leads', description: "Add a 'Contract sent' stage and auto-move leads once the BAA is countersigned.", priority: 3, owner: 'Ops' },
+      { title: 'Write onboarding QA checklist for clinical review', description: 'Checklist should cover license verification, malpractice coverage, and background check status.', priority: 2, owner: 'Clinical' },
+      { title: 'Draft provider welcome email sequence', description: 'Three-part sequence: welcome, portal walkthrough, first-week check-in.', priority: 3, owner: 'Ops' },
+    ],
+    "Stand up the provider comp model for Q4 hiring": [
+      { title: 'Draft senior-provider compensation bands', description: 'Model base and variable comp for senior clinical providers against Q4 hiring targets.', priority: 2, owner: 'Ops' },
+      { title: 'Benchmark comp against 3 comparable telehealth platforms', description: 'Pull public or estimated comp data to sanity-check proposed bands.', priority: 3, owner: 'Ops' },
+      { title: 'Review draft with Founder before Q4 hiring plan locks', description: 'Walk through banding logic and flag any gaps before sign-off.', priority: 2, owner: 'Ops' },
+    ],
+    "Close the seed extension conversation from the Grain call": [
+      { title: 'Pull updated cohort retention numbers for investor', description: 'Investor asked for these on the Sep 10 Grain call before the next conversation.', priority: 2, owner: 'Founder' },
+      { title: 'Draft follow-up email recapping the call and next steps', description: 'Summarize discussion points and propose a date for the next call.', priority: 3, owner: 'Founder' },
+    ],
+  };
+
+  let currentGoals = [];
+  let sessionTicketCount = 0;
+  let sessionAttioCount = 0;
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str ?? '';
+    return div.innerHTML;
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  /* ---------- Theme ---------- */
+  function toggleTheme() {
+    const html = document.documentElement;
+    const btn = document.getElementById('themeToggle');
+    if (html.getAttribute('data-theme') === 'light') {
+      html.removeAttribute('data-theme');
+      btn.textContent = 'Light mode';
+    } else {
+      html.setAttribute('data-theme', 'light');
+      btn.textContent = 'Dark mode';
+    }
+  }
+
+  /* ---------- Generic expand/collapse ---------- */
+  function toggleDetail(id) {
+    const d = document.getElementById('detail-' + id);
+    if (!d) return;
+    d.classList.toggle('open');
+    const t = document.getElementById('toggle-' + id);
+    if (t) t.textContent = d.classList.contains('open') ? 'Hide details ▾' : 'Show details ▸';
+  }
+
+  /* ---------- Integration pills ---------- */
+  function togglePill(name) {
+    document.querySelectorAll('.pill-pop').forEach(p => {
+      if (p.id !== 'pop-' + name) p.classList.remove('open');
+    });
+    document.getElementById('pop-' + name).classList.toggle('open');
+  }
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.pill-wrap')) {
+      document.querySelectorAll('.pill-pop').forEach(p => p.classList.remove('open'));
+    }
+  });
+
+  /* ---------- Quick-create forms ---------- */
+  function toggleForm(id) {
+    document.getElementById(id).classList.toggle('open');
+  }
+
+  async function createGoal() {
+    const title = document.getElementById('qfGoalTitle').value.trim();
+    if (!title) { alert('Give the goal a title first.'); return; }
+    const body = {
+      title,
+      vertical: document.getElementById('qfGoalVertical').value,
+      priority: document.getElementById('qfGoalPriority').value,
+      dueDate: document.getElementById('qfGoalDue').value || undefined,
+      owner: document.getElementById('qfGoalOwner').value || undefined,
+    };
+    try {
+      const res = await fetch(WORKER_URL + '/api/goals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Create failed');
+
+      document.getElementById('qfGoalTitle').value = '';
+      document.getElementById('qfGoalDue').value = '';
+      document.getElementById('qfGoalOwner').value = '';
+      toggleForm('goalForm');
+      await loadGoals();
+    } catch (err) {
+      alert('Could not create goal: ' + err.message);
+    }
+  }
+
+  function appendTicketToList(issue, ownerLabel, priorityNum, description) {
+    const empty = document.getElementById('emptyState');
+    if (empty) empty.style.display = 'none';
+
+    const list = document.getElementById('ticketList');
+    const el = document.createElement('div');
+    el.className = 'ticket';
+    const detailId = 'tdetail-manual-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    const prioClass = priorityNum === 2 ? 'prio-high' : priorityNum === 4 ? '' : 'prio-med';
+    const prioLabel = priorityNum === 2 ? 'High priority' : priorityNum === 4 ? 'Low priority' : 'Medium priority';
+
+    el.innerHTML = `
+      <span class="id mono">${escapeHtml(issue.identifier)}</span>
+      <div class="body">
+        <p class="title"><a href="${issue.url}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${escapeHtml(issue.title)}</a></p>
+        <div class="row">
+          <span class="chip owner">${escapeHtml(ownerLabel)}</span>
+          <span class="chip ${prioClass}">${prioLabel}</span>
+          <span class="chip status mono" data-status="0">Todo</span>
+          <span class="chip synced-tag">Live in Linear</span>
+        </div>
+        <div class="ticket-detail" id="${detailId}">
+          <p class="desc">${escapeHtml(description || 'No description provided.')}</p>
+          <div class="detail-row"><span>Linear ID</span><span class="mono">${escapeHtml(issue.identifier)}</span></div>
+          <div class="detail-row"><span>Created</span><span>just now, live</span></div>
+        </div>
+      </div>
+    `;
+    list.appendChild(el);
+    el.addEventListener('click', (e) => {
+      if (e.target.tagName === 'A') return;
+      document.getElementById(detailId).classList.toggle('open');
+    });
+    el.querySelector('.chip.status').addEventListener('click', (e) => {
+      e.stopPropagation();
+      cycleStatus(e.currentTarget);
+    });
+
+    sessionTicketCount += 1;
+    document.getElementById('linearLastSync').textContent = 'just now';
+    document.getElementById('linearIssueCount').textContent = sessionTicketCount;
+  }
+
+  async function createStandaloneTicket() {
+    const title = document.getElementById('qfTicketTitle').value.trim();
+    if (!title) { alert('Give the ticket a title first.'); return; }
+    const description = document.getElementById('qfTicketDesc').value.trim();
+    const priority = parseInt(document.getElementById('qfTicketPriority').value, 10);
+
+    try {
+      const res = await fetch(WORKER_URL + '/api/linear-ticket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description, priority }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Create failed');
+
+      appendTicketToList(data.issue, 'Manual', priority, description);
+      document.getElementById('qfTicketTitle').value = '';
+      document.getElementById('qfTicketDesc').value = '';
+      toggleForm('ticketForm');
+    } catch (err) {
+      alert('Could not create ticket: ' + err.message);
+    }
+  }
+
+  async function createAttioTaskManual() {
+    const content = document.getElementById('qfAttioContent').value.trim();
+    if (!content) { alert('Write the task first.'); return; }
+    const deadline = document.getElementById('qfAttioDeadline').value;
+
+    try {
+      const res = await fetch(WORKER_URL + '/api/attio-task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content,
+          deadline: deadline ? new Date(deadline + 'T00:00:00').toISOString() : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Create failed');
+
+      sessionAttioCount += 1;
+      document.getElementById('attioTaskCount').textContent = sessionAttioCount;
+      document.getElementById('qfAttioContent').value = '';
+      document.getElementById('qfAttioDeadline').value = '';
+      toggleForm('attioForm');
+      alert('Task created in Attio.');
+    } catch (err) {
+      alert('Could not create task: ' + err.message);
+    }
+  }
+
+  /* ---------- Live goals ---------- */
+  async function loadGoals() {
+    const container = document.getElementById('goalsContainer');
+    container.innerHTML = 'Loading live goals from Notion…';
+    container.className = 'empty-state';
+    try {
+      const res = await fetch(WORKER_URL + '/api/goals');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load goals');
+      currentGoals = data.goals;
+      renderGoals();
+    } catch (err) {
+      container.className = 'empty-state error';
+      container.textContent = "Couldn't reach the live backend: " + err.message;
+    }
+  }
+
+  function renderGoals() {
+    const container = document.getElementById('goalsContainer');
+    container.className = '';
+    container.innerHTML = '';
+    currentGoals.forEach((g, idx) => {
+      const gid = 'g' + idx;
+      const synced = g.linearSyncStatus === 'Synced';
+      const hasTemplate = !!ticketTemplates[g.title];
+
+      let actionHtml;
+      if (synced) {
+        actionHtml = `<button class="sync-btn" disabled>Already synced — see Linear</button>`;
+      } else if (hasTemplate) {
+        actionHtml = `<button class="sync-btn" id="syncBtn-${gid}" onclick="event.stopPropagation(); runSync(${idx})">Sync goal → Linear (${ticketTemplates[g.title].length} tickets)</button>`;
+      } else {
+        actionHtml = `<div class="sync-note mono">No ticket template configured for this goal</div>`;
+      }
+
+      const card = document.createElement('div');
+      card.className = 'goal-card';
+      card.innerHTML = `
+        <span class="tag mono">${escapeHtml((g.vertical || '').toUpperCase())}</span>
+        <p>${escapeHtml(g.title)}</p>
+        <div class="meta">
+          <span>Owner: ${escapeHtml(g.owner || '—')}</span>
+          <span>Due ${formatDate(g.dueDate)}</span>
+        </div>
+        <div class="detail-toggle mono" id="toggle-${gid}" onclick="toggleDetail('${gid}')">Show details ▸</div>
+        <div class="goal-detail" id="detail-${gid}">
+          <div class="detail-row"><span>Status</span><span>${escapeHtml(g.status)}</span></div>
+          <div class="detail-row"><span>Priority</span><span>${escapeHtml(g.priority)}</span></div>
+          <div class="detail-row"><span>Linear sync</span><span>${escapeHtml(g.linearSyncStatus)}</span></div>
+          ${g.notes ? `<div class="detail-row"><span>Notes</span><span>${escapeHtml(g.notes)}</span></div>` : ''}
+        </div>
+        ${actionHtml}
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  async function runSync(idx) {
+    const goal = currentGoals[idx];
+    const tickets = ticketTemplates[goal.title];
+    if (!tickets) return;
+
+    const btn = document.getElementById('syncBtn-g' + idx);
+    const pill = document.getElementById('pill-linear');
+    const list = document.getElementById('ticketList');
+    const empty = document.getElementById('emptyState');
+
+    btn.disabled = true;
+    btn.textContent = 'Syncing…';
+    pill.classList.add('syncing');
+    if (empty) empty.style.display = 'none';
+
+    try {
+      const res = await fetch(WORKER_URL + '/api/sync-goal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ goalPageId: goal.id, tickets }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Sync failed');
+
+      data.tickets.forEach((issue, i) => {
+        setTimeout(() => {
+          const t = tickets[i];
+          const el = document.createElement('div');
+          el.className = 'ticket';
+          const detailId = 'tdetail-' + idx + '-' + i;
+          el.innerHTML = `
+            <span class="id mono">${escapeHtml(issue.identifier)}</span>
+            <div class="body">
+              <p class="title"><a href="${issue.url}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${escapeHtml(issue.title)}</a></p>
+              <div class="row">
+                <span class="chip owner">${escapeHtml(t.owner || '')}</span>
+                <span class="chip ${t.priority === 2 ? 'prio-high' : 'prio-med'}">${t.priority === 2 ? 'High priority' : 'Medium priority'}</span>
+                <span class="chip status mono" data-status="0">Todo</span>
+                <span class="chip synced-tag">Live in Linear</span>
+              </div>
+              <div class="ticket-detail" id="${detailId}">
+                <p class="desc">${escapeHtml(t.description || '')}</p>
+                <div class="detail-row"><span>Linear ID</span><span class="mono">${escapeHtml(issue.identifier)}</span></div>
+                <div class="detail-row"><span>Created</span><span>just now, live</span></div>
+              </div>
+            </div>
+          `;
+          list.appendChild(el);
+          el.addEventListener('click', (e) => {
+            if (e.target.tagName === 'A') return;
+            document.getElementById(detailId).classList.toggle('open');
+          });
+          el.querySelector('.chip.status').addEventListener('click', (e) => {
+            e.stopPropagation();
+            cycleStatus(e.currentTarget);
+          });
+        }, i * 260);
+      });
+
+      setTimeout(() => {
+        pill.classList.remove('syncing');
+        sessionTicketCount += data.tickets.length;
+        document.getElementById('linearLastSync').textContent = 'just now';
+        document.getElementById('linearIssueCount').textContent = sessionTicketCount;
+        currentGoals[idx] = { ...goal, linearSyncStatus: 'Synced' };
+        renderGoals();
+      }, tickets.length * 260 + 250);
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Sync failed — retry';
+      pill.classList.remove('syncing');
+      alert('Sync failed: ' + err.message);
+    }
+  }
+
+  function cycleStatus(chip) {
+    const states = ['Todo', 'In progress', 'Done'];
+    let s = (parseInt(chip.dataset.status || '0', 10) + 1) % 3;
+    chip.dataset.status = s;
+    chip.textContent = states[s];
+    chip.classList.remove('s1', 's2');
+    if (s === 1) chip.classList.add('s1');
+    if (s === 2) chip.classList.add('s2');
+  }
+
+  /* ---------- Follow-up nudge (co2 is live, rest are simulated) ---------- */
+  async function sendNudge(id) {
+    const btn = document.getElementById('nudge-' + id);
+    const wait = document.getElementById('wait-' + id);
+    if (!btn || btn.disabled) return;
+
+    if (id === 'co2') {
+      btn.textContent = 'Creating…';
+      btn.disabled = true;
+      try {
+        const res = await fetch(WORKER_URL + '/api/attio-task', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: 'Follow up with the investor intro from the Sep 10 Grain call — send updated cohort retention numbers.',
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Attio task creation failed');
+        btn.textContent = '✓ Real task created in Attio · just now';
+        btn.classList.add('sent');
+        sessionAttioCount += 1;
+        document.getElementById('attioTaskCount').textContent = sessionAttioCount;
+        if (wait) { wait.textContent = 'Nudged just now'; wait.classList.add('clear'); }
+      } catch (err) {
+        btn.textContent = 'Failed — retry';
+        btn.disabled = false;
+        alert('Attio task creation failed: ' + err.message);
+      }
+      return;
+    }
+
+    btn.textContent = '✓ Reminder sent · just now (simulated)';
+    btn.disabled = true;
+    btn.classList.add('sent');
+    if (wait) { wait.textContent = 'Nudged just now'; wait.classList.add('clear'); }
+  }
+
+  /* ---------- Vertical tabs ---------- */
+  function showVertical(which) {
+    const clinical = document.getElementById('verticalClinical');
+    const consumer = document.getElementById('verticalConsumer');
+    const tabClinical = document.getElementById('tabClinical');
+    const tabConsumer = document.getElementById('tabConsumer');
+
+    if (which === 'clinical') {
+      clinical.style.display = ''; consumer.style.display = 'none';
+      tabClinical.classList.add('on'); tabConsumer.classList.remove('on');
+    } else {
+      clinical.style.display = 'none'; consumer.style.display = '';
+      tabClinical.classList.remove('on'); tabConsumer.classList.add('on');
+    }
+  }
+
+  loadGoals();
+</script>
+
+</body>
+</html>
